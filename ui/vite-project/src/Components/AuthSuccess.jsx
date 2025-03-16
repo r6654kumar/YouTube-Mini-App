@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { FaSpinner } from 'react-icons/fa';
 
 const AuthSuccess = () => {
   const navigate = useNavigate();
@@ -14,9 +15,12 @@ const AuthSuccess = () => {
   }, [navigate]);
 
   return (
-    <div style={{ textAlign: 'center', marginTop: '100px' }}>
-      <h3>Login Successful!</h3>
-      <p>Redirecting to Dashboard...</p>
+    <div className="flex flex-col items-center justify-center min-h-screen bg-white px-4">
+      <h3 className="text-2xl font-bold text-gray-800 mb-4">Login Successful!</h3>
+      <div className="flex items-center text-gray-700 text-lg">
+        <FaSpinner className="animate-spin mr-2 text-xl text-gray-600" />
+        Redirecting to Dashboard...
+      </div>
     </div>
   );
 };
