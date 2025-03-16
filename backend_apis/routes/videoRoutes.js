@@ -8,14 +8,23 @@ const router = express.Router();
 //Api to fetch the video details
 router.get('/videos', async (req, res) => {
   if (!tokens) return res.status(401).json({ message: 'Not authenticated' });
+
   const youtube = getYouTubeClient(tokens);
+
   try {
     const channelRes = await youtube.channels.list({
       part: 'contentDetails',
       mine: true
     });
 
-    const uploadsPlaylistId = channelRes.data.items[0].contentDetails.relatedPlaylists.uploads;
+    const items = channelRes.data.items;
+
+    if (!items || items.length === 0) {
+      await logEvent('fetch_videos', 'No channel data found');
+      return res.json([]); 
+    }
+
+    const uploadsPlaylistId = items[0].contentDetails.relatedPlaylists.uploads;
 
     const videosRes = await youtube.playlistItems.list({
       part: 'snippet',
@@ -23,11 +32,15 @@ router.get('/videos', async (req, res) => {
       maxResults: 10
     });
 
-    const videos = videosRes.data.items.map(item => ({
-      videoId: item.snippet.resourceId.videoId,
-      title: item.snippet.title,
-      description: item.snippet.description,
-    }));
+    const videoItems = videosRes.data.items;
+
+    const videos = videoItems && videoItems.length > 0
+      ? videoItems.map(item => ({
+          videoId: item.snippet.resourceId.videoId,
+          title: item.snippet.title,
+          description: item.snippet.description,
+        }))
+      : [];
 
     await logEvent('fetch_videos', `Fetched ${videos.length} uploaded videos`);
     res.json(videos);
@@ -35,6 +48,8 @@ router.get('/videos', async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+
+
 
 //API to update video title
 router.post('/update-title', async (req, res) => {
